@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
         event_time: Math.floor(Date.now() / 1000),
         action_source: 'website',
         event_source_url: sourceUrl || 'https://kidsmall-capi.vercel.app',
-        event_id: eventId || ('lead_' + Date.now()),
+        event_id: 'capi_' + Date.now(),
         user_data: {
           ph: sha256(cleanedPhone),
           fn: sha256(firstName),
