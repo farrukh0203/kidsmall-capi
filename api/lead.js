@@ -6,8 +6,11 @@ const AMO_TOKEN     = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjEzNzVlMDYwZ
 const AMO_SUBDOMAIN = 'kidsmall';
 const AMO_PIPELINE  = 10613274;
 const AMO_STAGE     = 83679402;
-const FIELD_AGE     = 850509; // Yosh — Company field
+const FIELD_AGE     = 850509;
 
+function sha256(val) {
+  return crypto.createHash('sha256').update((val||'').trim().toLowerCase()).digest('hex');
+}
 function cleanPhone(phone) {
   let c = (phone||'').replace(/\D/g,'');
   if (c.startsWith('998')) return '+' + c;
@@ -23,16 +26,41 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { name, phone, age } = req.body;
+    const { name, phone, age, eventId, userAgent, sourceUrl } = req.body;
     if (!phone || !name) return res.status(400).json({ error: 'name va phone majburiy' });
 
     const cleanedPhone = cleanPhone(phone);
+    const firstName = (name||'').trim().split(' ')[0].toLowerCase();
 
-    // amoCRM lead yaratish
+    // 1. Meta CAPI — Lead
+    const capiPayload = {
+      test_event_code: 'TEST75343',
+      data: [{
+        event_name: 'Lead',
+        event_time: Math.floor(Date.now() / 1000),
+        action_source: 'website',
+        event_source_url: sourceUrl || 'https://kidsmall-capi.vercel.app',
+        event_id: eventId || ('lead_' + Date.now()),
+        user_data: {
+          ph: sha256(cleanedPhone),
+          fn: sha256(firstName),
+          client_user_agent: userAgent || 'unknown',
+        },
+      }],
+    };
+
+    const capiRes = await fetch(
+      'https://graph.facebook.com/v19.0/' + PIXEL_ID + '/events?access_token=' + ACCESS_TOKEN,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(capiPayload) }
+    );
+    const capiData = await capiRes.json();
+    console.log('CAPI Lead:', JSON.stringify(capiData));
+
+    // 2. amoCRM lead
     const amoPayload = [{
-      name: name + ' — Ko\'ylakcha',
+      name: name + " — Ko'ylakcha",
       pipeline_id: AMO_PIPELINE,
-      status_id:   AMO_STAGE,
+      status_id: AMO_STAGE,
       tags: [{ name: 'CAPI' }],
       _embedded: {
         contacts: [{
@@ -46,69 +74,31 @@ module.exports = async (req, res) => {
 
     const amoRes = await fetch(
       'https://' + AMO_SUBDOMAIN + '.amocrm.ru/api/v4/leads/complex',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AMO_TOKEN },
-        body: JSON.stringify(amoPayload)
-      }
+      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AMO_TOKEN }, body: JSON.stringify(amoPayload) }
     );
     const amoData = await amoRes.json();
     console.log('amoCRM lead:', JSON.stringify(amoData));
 
-    // Tag + Yosh (Company field) — alohida so'rovlar
+    // 3. Tag + Yosh
     if (amoData && amoData[0] && amoData[0].id) {
       const leadId = amoData[0].id;
 
-      // Tag qo'shish
       await fetch('https://' + AMO_SUBDOMAIN + '.amocrm.ru/api/v4/leads', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AMO_TOKEN },
         body: JSON.stringify([{ id: leadId, _embedded: { tags: [{ name: 'CAPI' }] } }])
       });
 
-      // Yosh — Company field ga
       if (age) {
         await fetch('https://' + AMO_SUBDOMAIN + '.amocrm.ru/api/v4/leads', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AMO_TOKEN },
-          body: JSON.stringify([{
-            id: leadId,
-            custom_fields_values: [
-              { field_id: FIELD_AGE, values: [{ value: age }] }
-            ]
-          }])
+          body: JSON.stringify([{ id: leadId, custom_fields_values: [{ field_id: FIELD_AGE, values: [{ value: age }] }] }])
         });
       }
-
-      console.log('Tag va yosh qoshildi');
     }
 
-    // Meta CAPI — Lead event
-    try {{
-      const capiPayload = {
-      test_event_code: 'TEST75343',{
-        data: [{{
-          event_name: 'Lead',
-          event_time: Math.floor(Date.now() / 1000),
-          action_source: 'website',
-          event_source_url: req.body.sourceUrl || 'https://kidsmall-capi.vercel.app',
-          event_id: req.body.eventId || ('lead_' + Date.now()),
-          user_data: {{
-            ph: require('crypto').createHash('sha256').update(cleanedPhone.trim().toLowerCase()).digest('hex'),
-            fn: require('crypto').createHash('sha256').update((name||'').trim().split(' ')[0].toLowerCase()).digest('hex'),
-            client_user_agent: req.body.userAgent || 'unknown',
-          }},
-        }}],
-      }};
-      const capiRes = await fetch(
-        'https://graph.facebook.com/v19.0/' + PIXEL_ID + '/events?access_token=' + ACCESS_TOKEN,
-        {{ method: 'POST', headers: {{'Content-Type': 'application/json'}}, body: JSON.stringify(capiPayload) }}
-      );
-      const capiData = await capiRes.json();
-      console.log('CAPI Lead:', JSON.stringify(capiData));
-    }} catch(e) {{ console.error('CAPI xato:', e); }}
-
-    return res.status(200).json({{ success: true, amo: amoData }});
+    return res.status(200).json({ success: true, capi: capiData, amo: amoData });
 
   } catch (err) {
     console.error('Xato:', err);
