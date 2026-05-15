@@ -567,14 +567,23 @@
   }
   function handleOv(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
 
-  function submitForm() {
+  async function submitForm() {
     const name  = document.getElementById('inp-name').value.trim();
     const phone = document.getElementById('inp-phone').value.trim();
     const age   = document.getElementById('inp-age').value.trim();
     if (!name)  { alert('Iltimos, ismingizni kiriting.'); return; }
     if (!phone) { alert('Iltimos, telefon raqamingizni kiriting.'); return; }
+
     document.getElementById('step1').style.display = 'none';
     document.getElementById('stepOk').style.display = 'block';
+
+    try {
+      await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, age })
+      });
+    } catch(e) { console.warn('API xato:', e); }
     console.log('Lead:', { name, phone, age });
   }
 
