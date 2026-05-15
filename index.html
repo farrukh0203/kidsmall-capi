@@ -84,7 +84,7 @@
       letter-spacing: 1px;
       text-transform: uppercase;
       margin-bottom: 24px;
-      width: fit-content;
+      margin: 0 auto;
       animation: fadeL 0.7s ease both;
     }
 
@@ -106,7 +106,8 @@
       line-height: 1.7;
       margin-bottom: 36px;
       font-weight: 300;
-      max-width: 420px;
+      max-width: 480px;
+      margin: 0 auto 36px;
       animation: fadeL 0.7s 0.15s ease both;
     }
 
@@ -119,14 +120,16 @@
       font-family: var(--fb);
       font-size: 1rem;
       font-weight: 700;
-      padding: 18px 40px;
-      border-radius: 14px;
+      padding: 22px 56px;
+      border-radius: 16px;
       border: none;
       cursor: pointer;
       transition: all 0.25s;
       box-shadow: 0 8px 32px rgba(232,77,138,0.4);
       animation: fadeL 0.7s 0.2s ease both, glow-btn 2.5s 1.5s ease-in-out infinite;
-      width: fit-content;
+      width: 100%;
+      max-width: 360px;
+      font-size: 1.1rem;
       text-decoration: none;
     }
     .hero-cta:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(232,77,138,0.5); }
@@ -144,7 +147,9 @@
       font-weight: 600;
       color: #9a6c00;
       animation: fadeL 0.7s 0.25s ease both;
-      width: fit-content;
+      width: 100%;
+      max-width: 360px;
+      justify-content: center;
       line-height: 1.4;
     }
     .korona-badge strong { color: var(--gold); }
@@ -166,7 +171,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center top;
+      object-position: center center;
       display: block;
     }
     .hero-right::after {
@@ -277,7 +282,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center top;
+      object-position: center center;
       transition: transform 0.5s;
       display: block;
     }
@@ -383,7 +388,7 @@
     @media(max-width:768px) {
       .hero { grid-template-columns:1fr; min-height:auto; }
       .hero-left { padding:40px 24px; }
-      .hero-right { height:420px; }
+      .hero-right { height:520px; }
       .features { padding:56px 20px; }
       .gallery { padding:56px 16px; }
       .gallery-grid { grid-template-columns:repeat(2,1fr); }
@@ -407,7 +412,6 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-left">
-    <div class="hero-badge">👑 Kids Mall — Ekskluziv kolleksiya</div>
     <h1>Qizingizni <em>Printessaga</em> aylantiradigan vecherniy ko'ylakchalar</h1>
     <p class="hero-sub">Turkiyada ishlab chiqarilgan, qo'l mehnati bilan bezatilgan, premium sifatli ko'ylakchalar. 2 yoshdan 12 yoshgacha.</p>
     <a href="#" class="hero-cta" onclick="openModal();return false;">
@@ -453,7 +457,7 @@
       <div class="feat-desc">Pastki qismlari maxsus obrich qilib ishlangan, chiroyli shaklda turadi</div>
     </div>
     <div class="feat-card reveal" style="transition-delay:0.19s">
-      <div class="feat-icon">🔧</div>
+      <div class="feat-icon">🎗️</div>
       <div class="feat-title">Orqa tomonini moslash</div>
       <div class="feat-desc">Orqa tomonini qizingizning gavdasiga qarab sozlash mumkin</div>
     </div>
@@ -507,12 +511,12 @@
       <div class="footer-brand">Kids <span>Mall</span><small>Qizlar uchun premium ko'ylakchalar</small></div>
     </div>
     <div class="footer-right">
-      <a class="footer-phone" href="tel:+998XXXXXXXXX">+998 XX XXX XX XX</a>
+      <a class="footer-phone" href="tel:+998910360022">91 036 00 22</a>
       <div class="footer-socs">
-        <a class="soc tg" href="#" target="_blank">
+        <a class="soc tg" href="https://t.me/kidsmall_uz" target="_blank">
           <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.02 9.52c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.04 14.6l-2.95-.924c-.641-.204-.654-.641.136-.953l11.527-4.445c.535-.194 1.003.131.81.97z"/></svg>
         </a>
-        <a class="soc ig" href="#" target="_blank">
+        <a class="soc ig" href="https://www.instagram.com/kidsmall.samarkand/" target="_blank">
           <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
         </a>
       </div>
@@ -541,7 +545,7 @@
         <div class="bemoji">🎉</div>
         <h3>Buyurtmangiz qabul qilindi!</h3>
         <p>Tez orada operatorimiz siz bilan bog'lanadi.<br>Savollaringiz bo'lsa, telegramdan yozing 👇</p>
-        <a href="#" target="_blank" class="tgbtn">
+        <a href="https://t.me/kidsmall_uz" target="_blank" class="tgbtn">
           <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.02 9.52c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.04 14.6l-2.95-.924c-.641-.204-.654-.641.136-.953l11.527-4.445c.535-.194 1.003.131.81.97z"/></svg>
           Telegramdan yozish
         </a>
