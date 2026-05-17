@@ -431,7 +431,7 @@
   <div class="hero-left">
     <h1>Qizingizni <em>Prinsessaga</em> aylantiradigan vecherniy ko'ylakchalar</h1>
     <p class="hero-sub">Turkiyada ishlab chiqarilgan, qo'l mehnati bilan bezatilgan, premium sifatli ko'ylakchalar. 2 yoshdan 16 yoshgacha.</p>
-    <a href="#" class="hero-cta" onclick="openModal();return false;">
+    <a href="#" class="hero-cta" onclick="scrollToForm();return false;">
       👑 Hoziroq xarid qilish
     </a>
     <div class="korona-badge">
@@ -496,29 +496,44 @@
   <div class="gallery-label">Kolleksiya</div>
   <h2 class="gallery-title">Bizning <span>ko'ylakchalarimiz</span></h2>
   <div class="gallery-grid">
-    <div class="gallery-item reveal" onclick="openModal()"><img src="1.jpg" alt="Ko'ylak 1"/></div>
-    <div class="gallery-item reveal" style="transition-delay:0.05s" onclick="openModal()"><img src="2.jpg" alt="Ko'ylak 2"/></div>
-    <div class="gallery-item reveal" style="transition-delay:0.08s" onclick="openModal()"><img src="3.jpg" alt="Ko'ylak 3"/></div>
-    <div class="gallery-item reveal" style="transition-delay:0.11s" onclick="openModal()"><img src="4.jpg" alt="Ko'ylak 4"/></div>
-    <div class="gallery-item reveal" style="transition-delay:0.14s" onclick="openModal()"><img src="5.jpg" alt="Ko'ylak 5"/></div>
-    <div class="gallery-item reveal" style="transition-delay:0.17s" onclick="openModal()"><img src="6.jpg" alt="Ko'ylak 6"/></div>
-    <div class="gallery-item reveal" style="transition-delay:0.2s" onclick="openModal()"><img src="7.jpg" alt="Ko'ylak 7"/></div>
-    <div class="gallery-item reveal" style="transition-delay:0.23s" onclick="openModal()"><img src="8.jpg" alt="Ko'ylak 8"/></div>
+    <div class="gallery-item reveal" onclick="scrollToForm()"><img src="1.jpg" alt="Ko'ylak 1"/></div>
+    <div class="gallery-item reveal" style="transition-delay:0.05s" onclick="scrollToForm()"><img src="2.jpg" alt="Ko'ylak 2"/></div>
+    <div class="gallery-item reveal" style="transition-delay:0.08s" onclick="scrollToForm()"><img src="3.jpg" alt="Ko'ylak 3"/></div>
+    <div class="gallery-item reveal" style="transition-delay:0.11s" onclick="scrollToForm()"><img src="4.jpg" alt="Ko'ylak 4"/></div>
+    <div class="gallery-item reveal" style="transition-delay:0.14s" onclick="scrollToForm()"><img src="5.jpg" alt="Ko'ylak 5"/></div>
+    <div class="gallery-item reveal" style="transition-delay:0.17s" onclick="scrollToForm()"><img src="6.jpg" alt="Ko'ylak 6"/></div>
+    <div class="gallery-item reveal" style="transition-delay:0.2s" onclick="scrollToForm()"><img src="7.jpg" alt="Ko'ylak 7"/></div>
+    <div class="gallery-item reveal" style="transition-delay:0.23s" onclick="scrollToForm()"><img src="8.jpg" alt="Ko'ylak 8"/></div>
   </div>
   <div class="gallery-cta reveal">
-    <a href="#" class="hero-cta" onclick="openModal();return false;" style="margin:0 auto;">
+    <a href="#" class="hero-cta" onclick="scrollToForm();return false;" style="margin:0 auto;">
       👑 Xarid qilish — Korona BEPUL
     </a>
   </div>
 </section>
 
-<!-- CTA -->
-<section class="cta-sec">
-  <h2>Hoziroq xarid qilsangiz — 👑 korona BEPUL!</h2>
-  <p>Aksiya muddati cheklangan. Qizingizni prinsessa qiling!</p>
-  <a href="#" class="cta-gold" onclick="openModal();return false;">
-    🎁 Hoziroq xarid qilish →
-  </a>
+<!-- CTA FORM -->
+<section class="cta-sec" id="contact-form">
+  <div style="max-width:520px;margin:0 auto;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:24px;padding:48px 40px;">
+    <h2 style="font-family:var(--fh);font-size:clamp(1.4rem,3vw,2rem);font-weight:700;color:#fff;margin-bottom:10px;letter-spacing:-0.5px;">Batafsil ma'lumot olish uchun<br>formani to'ldiring</h2>
+    <p style="color:rgba(255,255,255,0.8);font-size:0.95rem;margin-bottom:28px;">🎁 Hoziroq buyurtma bersangiz — 100 000 so'mlik korona BEPUL!</p>
+    <div id="cta-form-inner">
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:0.73rem;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:7px;text-align:left;">Ism</label>
+        <input type="text" id="cta-name" placeholder="Masalan: Malika" style="width:100%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:13px 16px;color:#fff;font-family:var(--fb);font-size:0.95rem;outline:none;"/>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:0.73rem;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:7px;text-align:left;">Telefon raqam</label>
+        <input type="tel" id="cta-phone" placeholder="+998 90 123 45 67" style="width:100%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:13px 16px;color:#fff;font-family:var(--fb);font-size:0.95rem;outline:none;"/>
+      </div>
+      <button onclick="submitCTA()" style="width:100%;background:linear-gradient(135deg,var(--gold),#b8860b);color:#fff;font-family:var(--fb);font-size:1rem;font-weight:700;padding:16px;border-radius:10px;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2);">✉️ Yuborish</button>
+    </div>
+    <div id="cta-success" style="display:none;text-align:center;padding:20px 0;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">🎉</div>
+      <h3 style="font-family:var(--fh);font-size:1.3rem;color:#fff;margin-bottom:8px;">Buyurtmangiz qabul qilindi!</h3>
+      <p style="color:rgba(255,255,255,0.7);font-size:0.9rem;">Tez fursatda siz bilan bog'lanamiz.</p>
+    </div>
+  </div>
 </section>
 
 <!-- FOOTER -->
@@ -582,13 +597,16 @@
   }
   function handleOv(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
 
+  let submitted = false;
   async function submitForm() {
+    if (submitted) return;
     const name  = document.getElementById('inp-name').value.trim();
     const phone = document.getElementById('inp-phone').value.trim();
     const age   = document.getElementById('inp-age').value.trim();
     if (!name)  { alert('Iltimos, ismingizni kiriting.'); return; }
     if (!phone) { alert('Iltimos, telefon raqamingizni kiriting.'); return; }
 
+    submitted = true;
     document.getElementById('step1').style.display = 'none';
     document.getElementById('stepOk').style.display = 'block';
 
@@ -604,6 +622,38 @@
       });
     } catch(e) { console.warn('API xato:', e); }
     console.log('Lead:', { name, phone, age });
+  }
+
+  function scrollToForm() {
+    document.getElementById('contact-form').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // URL da #contact-form bo'lsa — avtomatik scroll
+  if (window.location.hash === '#contact-form') {
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        document.getElementById('contact-form').scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    });
+  }
+
+  let ctaSubmitted = false;
+  async function submitCTA() {
+    if (ctaSubmitted) return;
+    const name  = document.getElementById('cta-name').value.trim();
+    const phone = document.getElementById('cta-phone').value.trim();
+    if (!name)  { alert('Iltimos, ismingizni kiriting.'); return; }
+    if (!phone) { alert('Iltimos, telefon raqamingizni kiriting.'); return; }
+    ctaSubmitted = true;
+    document.getElementById('cta-form-inner').style.display = 'none';
+    document.getElementById('cta-success').style.display = 'block';
+    try {
+      await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, userAgent: navigator.userAgent, sourceUrl: window.location.href })
+      });
+    } catch(e) { console.warn('API xato:', e); }
   }
 
   document.querySelectorAll('.reveal').forEach(el =>
