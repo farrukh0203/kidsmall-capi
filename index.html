@@ -647,11 +647,16 @@
     ctaSubmitted = true;
     document.getElementById('cta-form-inner').style.display = 'none';
     document.getElementById('cta-success').style.display = 'block';
+
+    const eid = 'lead_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    if (typeof fbq !== 'undefined') {
+      fbq('track', 'Lead', { content_name: "Ko'ylakcha buyurtma", value: 0, currency: 'UZS' }, { eventID: eid });
+    }
     try {
       await fetch('/api/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, userAgent: navigator.userAgent, sourceUrl: window.location.href })
+        body: JSON.stringify({ name, phone, eventId: eid, userAgent: navigator.userAgent, sourceUrl: window.location.href })
       });
     } catch(e) { console.warn('API xato:', e); }
   }
