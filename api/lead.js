@@ -8,6 +8,8 @@ const AMO_SUBDOMAIN = process.env.AMO_SUBDOMAIN;
 const AMO_PIPELINE  = parseInt(process.env.AMO_PIPELINE_ID  || '0');
 const AMO_STAGE     = parseInt(process.env.AMO_STAGE_ID     || '0');
 const FIELD_AGE     = parseInt(process.env.AMO_FIELD_AGE    || '0');
+const FIELD_FBP     = 859807;
+const FIELD_FBC     = 859809;
 
 // ── Yordamchi funksiyalar ────────────────────────────────────────────────────
 function sha256(val) {
@@ -134,6 +136,19 @@ async function createAmoCRMLead(data) {
       if (existing) {
         contactId = existing.id;
         console.log('[AMOCRM] Mavjud kontakt topildi:', contactId);
+
+        // FBP / FBC ni yangilash
+        if (data.fbp || data.fbc) {
+          const updateFields = [];
+          if (data.fbp) updateFields.push({ field_id: FIELD_FBP, values: [{ value: data.fbp }] });
+          if (data.fbc) updateFields.push({ field_id: FIELD_FBC, values: [{ value: data.fbc }] });
+          await fetch(`${base}/api/v4/contacts/${contactId}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({ custom_fields_values: updateFields }),
+          });
+          console.log('[AMOCRM] FBP/FBC yangilandi');
+        }
       }
     }
   } catch (err) {
@@ -149,6 +164,8 @@ async function createAmoCRMLead(data) {
         name: data.name,
         custom_fields_values: [
           { field_code: 'PHONE', values: [{ value: data.phone, enum_code: 'WORK' }] },
+          ...(data.fbp ? [{ field_id: FIELD_FBP, values: [{ value: data.fbp }] }] : []),
+          ...(data.fbc ? [{ field_id: FIELD_FBC, values: [{ value: data.fbc }] }] : []),
         ],
       }]),
     });
@@ -169,7 +186,10 @@ async function createAmoCRMLead(data) {
       name:        `${data.name} — Ko'ylakcha`,
       pipeline_id: AMO_PIPELINE,
       status_id:   AMO_STAGE,
-      ...(contactId ? { _embedded: { contacts: [{ id: contactId }] } } : {}),
+      _embedded: {
+        ...(contactId ? { contacts: [{ id: contactId }] } : {}),
+        tags: [{ name: 'CAPI' }],
+      },
     }]),
   });
   const leadData = await leadRes.json();
