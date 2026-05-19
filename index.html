@@ -85,24 +85,6 @@
       z-index: 2;
     }
 
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(232,77,138,0.1);
-      border: 1px solid rgba(232,77,138,0.3);
-      border-radius: 100px;
-      padding: 6px 16px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--pink);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 24px;
-      margin: 0 auto;
-      animation: fadeL 0.7s ease both;
-    }
-
     .hero h1 {
       font-family: var(--fh);
       font-size: clamp(2rem, 3.5vw, 3.2rem);
@@ -587,6 +569,13 @@
 </div>
 
 <script>
+  // ── Cookie o'qish ──────────────────────────────────────────────────────────
+  function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : '';
+  }
+
+  // ── Modal ──────────────────────────────────────────────────────────────────
   function openModal() {
     document.getElementById('modalOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -597,38 +586,46 @@
   }
   function handleOv(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
 
+  // ── Modal forma yuborish ───────────────────────────────────────────────────
   let submitted = false;
   async function submitForm() {
     if (submitted) return;
     const name  = document.getElementById('inp-name').value.trim();
     const phone = document.getElementById('inp-phone').value.trim();
     const age   = document.getElementById('inp-age').value.trim();
-    if (!name)  { alert('Iltimos, ismingizni kiriting.'); return; }
+    if (!name)  { alert('Iltimos, ismingizni kiriting.');          return; }
     if (!phone) { alert('Iltimos, telefon raqamingizni kiriting.'); return; }
 
     submitted = true;
-    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step1').style.display  = 'none';
     document.getElementById('stepOk').style.display = 'block';
 
     const eid = 'lead_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     if (typeof fbq !== 'undefined') {
       fbq('track', 'Lead', { content_name: "Ko'ylakcha buyurtma", value: 0, currency: 'UZS' }, { eventID: eid });
     }
+
     try {
       await fetch('/api/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, age, eventId: eid, userAgent: navigator.userAgent, sourceUrl: window.location.href })
+        body: JSON.stringify({
+          name, phone, age,
+          eventId:   eid,
+          fbp:       getCookie('_fbp'),
+          fbc:       getCookie('_fbc'),
+          userAgent: navigator.userAgent,
+          sourceUrl: window.location.href,
+        }),
       });
     } catch(e) { console.warn('API xato:', e); }
-    console.log('Lead:', { name, phone, age });
   }
 
+  // ── Scroll to form ─────────────────────────────────────────────────────────
   function scrollToForm() {
     document.getElementById('contact-form').scrollIntoView({ behavior: 'smooth' });
   }
 
-  // URL da #contact-form bo'lsa — avtomatik scroll
   if (window.location.hash === '#contact-form') {
     window.addEventListener('load', function() {
       setTimeout(function() {
@@ -637,34 +634,45 @@
     });
   }
 
+  // ── CTA forma yuborish ─────────────────────────────────────────────────────
   let ctaSubmitted = false;
   async function submitCTA() {
     if (ctaSubmitted) return;
     const name  = document.getElementById('cta-name').value.trim();
     const phone = document.getElementById('cta-phone').value.trim();
-    if (!name)  { alert('Iltimos, ismingizni kiriting.'); return; }
+    if (!name)  { alert('Iltimos, ismingizni kiriting.');          return; }
     if (!phone) { alert('Iltimos, telefon raqamingizni kiriting.'); return; }
+
     ctaSubmitted = true;
     document.getElementById('cta-form-inner').style.display = 'none';
-    document.getElementById('cta-success').style.display = 'block';
+    document.getElementById('cta-success').style.display    = 'block';
 
     const eid = 'lead_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     if (typeof fbq !== 'undefined') {
       fbq('track', 'Lead', { content_name: "Ko'ylakcha buyurtma", value: 0, currency: 'UZS' }, { eventID: eid });
     }
+
     try {
       await fetch('/api/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, eventId: eid, userAgent: navigator.userAgent, sourceUrl: window.location.href })
+        body: JSON.stringify({
+          name, phone,
+          eventId:   eid,
+          fbp:       getCookie('_fbp'),
+          fbc:       getCookie('_fbc'),
+          userAgent: navigator.userAgent,
+          sourceUrl: window.location.href,
+        }),
       });
     } catch(e) { console.warn('API xato:', e); }
   }
 
+  // ── Reveal animatsiya ──────────────────────────────────────────────────────
   document.querySelectorAll('.reveal').forEach(el =>
-    new IntersectionObserver((en,ob) => {
-      en.forEach(e => { if(e.isIntersecting){e.target.classList.add('visible');ob.unobserve(e.target);} });
-    }, {threshold:0.1}).observe(el)
+    new IntersectionObserver((en, ob) => {
+      en.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); ob.unobserve(e.target); } });
+    }, { threshold: 0.1 }).observe(el)
   );
 </script>
 </body>
