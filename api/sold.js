@@ -122,7 +122,7 @@ async function sendPurchaseToMeta(leadId, data) {
     data: [{
       event_name:       'Purchase',
       event_time:       Math.floor(Date.now() / 1000),
-      event_id:         `sold_${leadId}_${Date.now()}`,
+      event_id:         `sold_${leadId}`,
       event_source_url: process.env.SITE_URL || '',
       action_source:    'crm',
       user_data:        userData,
