@@ -6,6 +6,8 @@ const ACCESS_TOKEN   = process.env.META_ACCESS_TOKEN;
 const AMO_TOKEN      = process.env.AMO_TOKEN;
 const AMO_SUBDOMAIN  = process.env.AMO_SUBDOMAIN;
 const SOLD_STATUS_ID = parseInt(process.env.AMO_SOLD_STATUS_ID || '0');
+const FIELD_FBP = parseInt(process.env.AMO_FIELD_FBP || '0');
+const FIELD_FBC = parseInt(process.env.AMO_FIELD_FBC || '0');
 
 // ── Yordamchi funksiyalar ────────────────────────────────────────────────────
 function sha256(val) {
@@ -79,16 +81,23 @@ async function fetchLeadDetails(leadId) {
     const contact = await contactRes.json();
 
     let phone     = '';
+    let fbp       = '';
+    let fbc       = '';
     const firstName = (contact.name || '').split(' ')[0].toLowerCase();
 
     for (const field of contact.custom_fields_values || []) {
       if (field.field_code === 'PHONE' && field.values?.[0]?.value) {
         phone = cleanPhone(field.values[0].value);
-        break;
+      }
+      if (field.field_id === FIELD_FBP && field.values?.[0]?.value) {
+        fbp = field.values[0].value;
+      }
+      if (field.field_id === FIELD_FBC && field.values?.[0]?.value) {
+        fbc = field.values[0].value;
       }
     }
 
-    return { phone, firstName, price: lead.price || 0 };
+    return { phone, firstName, fbp, fbc, price: lead.price || 0 };
 
   } catch (err) {
     console.error('[SOLD] Lead olishda xatolik:', err);
@@ -104,8 +113,10 @@ async function sendPurchaseToMeta(leadId, data) {
   }
 
   const userData = { client_user_agent: 'amoCRM' };
-  if (data.phone)     userData.ph = [sha256(data.phone)];
-  if (data.firstName) userData.fn = [sha256(data.firstName)];
+  if (data.phone)     userData.ph  = [sha256(data.phone)];
+  if (data.firstName) userData.fn  = [sha256(data.firstName)];
+  if (data.fbp)       userData.fbp = data.fbp;
+  if (data.fbc)       userData.fbc = data.fbc;
 
   const payload = {
     data: [{
