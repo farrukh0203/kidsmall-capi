@@ -113,8 +113,8 @@ async function sendPurchaseToMeta(leadId, data) {
   }
 
   const userData = { client_user_agent: 'amoCRM' };
-  if (data.phone)     userData.ph  = [sha256(data.phone)];
-  if (data.firstName) userData.fn  = [sha256(data.firstName)];
+  if (data.phone)     userData.ph  = sha256(data.phone);
+  if (data.firstName) userData.fn  = sha256(data.firstName);
   if (data.fbp)       userData.fbp = data.fbp;
   if (data.fbc)       userData.fbc = data.fbc;
 
