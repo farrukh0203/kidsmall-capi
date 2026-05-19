@@ -8,8 +8,8 @@ const AMO_SUBDOMAIN = process.env.AMO_SUBDOMAIN;
 const AMO_PIPELINE  = parseInt(process.env.AMO_PIPELINE_ID  || '0');
 const AMO_STAGE     = parseInt(process.env.AMO_STAGE_ID     || '0');
 const FIELD_AGE     = parseInt(process.env.AMO_FIELD_AGE    || '0');
-const FIELD_FBP     = 859807;
-const FIELD_FBC     = 859809;
+const FIELD_FBP = parseInt(process.env.AMO_FIELD_FBP || '0');
+const FIELD_FBC = parseInt(process.env.AMO_FIELD_FBC || '0');
 
 // ── Yordamchi funksiyalar ────────────────────────────────────────────────────
 function sha256(val) {
@@ -130,8 +130,9 @@ async function createAmoCRMLead(data) {
       `${base}/api/v4/contacts?query=${encodeURIComponent(data.phone)}`,
       { headers }
     );
-    if (searchRes.ok) {
-      const searchData = await searchRes.json();
+    const searchText = await searchRes.text();
+    if (searchRes.ok && searchText) {
+      const searchData = JSON.parse(searchText);
       const existing   = searchData?._embedded?.contacts?.[0];
       if (existing) {
         contactId = existing.id;
@@ -145,7 +146,7 @@ async function createAmoCRMLead(data) {
           await fetch(`${base}/api/v4/contacts/${contactId}`, {
             method: 'PATCH',
             headers,
-            body: JSON.stringify({ custom_fields_values: updateFields }),
+            body: JSON.stringify([{ id: contactId, custom_fields_values: updateFields }]),
           });
           console.log('[AMOCRM] FBP/FBC yangilandi');
         }
