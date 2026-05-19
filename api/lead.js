@@ -1,17 +1,14 @@
 const crypto = require('crypto');
 
-// ── Tokenlar Vercel Environment Variables dan o'qiladi ──────────────────────
 const PIXEL_ID      = process.env.META_PIXEL_ID;
 const ACCESS_TOKEN  = process.env.META_ACCESS_TOKEN;
 const AMO_TOKEN     = process.env.AMO_TOKEN;
 const AMO_SUBDOMAIN = process.env.AMO_SUBDOMAIN;
-const AMO_PIPELINE  = parseInt(process.env.AMO_PIPELINE_ID  || '0');
-const AMO_STAGE     = parseInt(process.env.AMO_STAGE_ID     || '0');
-const FIELD_AGE     = parseInt(process.env.AMO_FIELD_AGE    || '0');
-const FIELD_FBP = parseInt(process.env.AMO_FIELD_FBP || '0');
-const FIELD_FBC = parseInt(process.env.AMO_FIELD_FBC || '0');
+const AMO_PIPELINE  = parseInt(process.env.AMO_PIPELINE_ID || '0');
+const AMO_STAGE     = parseInt(process.env.AMO_STAGE_ID    || '0');
+const FIELD_FBP     = parseInt(process.env.AMO_FIELD_FBP   || '0');
+const FIELD_FBC     = parseInt(process.env.AMO_FIELD_FBC   || '0');
 
-// ── Yordamchi funksiyalar ────────────────────────────────────────────────────
 function sha256(val) {
   return crypto.createHash('sha256').update((val || '').trim().toLowerCase()).digest('hex');
 }
@@ -23,13 +20,6 @@ function cleanPhone(phone) {
   return '+' + c;
 }
 
-function getCookieValue(cookieStr, name) {
-  if (!cookieStr) return '';
-  const match = cookieStr.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? match[2] : '';
-}
-
-// ── Asosiy handler ───────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -38,9 +28,9 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { name, phone, age, eventId, fbp, fbc, userAgent, sourceUrl } = req.body;
+    const { name, phone, product, eventId, fbp, fbc, userAgent, sourceUrl } = req.body;
 
-    if (!phone || !name) {
+    if (!name || !phone) {
       return res.status(400).json({ error: 'name va phone majburiy' });
     }
 
@@ -48,39 +38,32 @@ module.exports = async (req, res) => {
     const firstName    = (name || '').trim().split(' ')[0].toLowerCase();
 
     // 1. Meta CAPI — Lead event
-    const capiResult = await sendMetaCAPI({
+    await sendMetaCAPI({
       eventId:   eventId || ('lead_' + Date.now()),
       phone:     cleanedPhone,
       firstName,
       fbp:       fbp || '',
       fbc:       fbc || '',
       userAgent: userAgent || '',
-      sourceUrl: sourceUrl || process.env.NEXT_PUBLIC_SITE_URL || '',
-    });
-
-    // 2. AmoCRM — kontakt + lid
-    const amoResult = await createAmoCRMLead({
-      name,
-      phone: cleanedPhone,
-      age,
-      fbp:       fbp || '',
-      fbc:       fbc || '',
       sourceUrl: sourceUrl || '',
+      product:   product || '',
     });
 
-    return res.status(200).json({ success: true, capi: capiResult, amo: amoResult });
+    // 2. AmoCRM
+    await createAmoCRMLead({ name, phone: cleanedPhone, product, fbp, fbc, sourceUrl });
+
+    return res.status(200).json({ success: true });
 
   } catch (err) {
     console.error('[LEAD ERROR]', err);
-    return res.status(500).json({ error: err.message || 'Server xatoligi' });
+    return res.status(500).json({ error: err.message });
   }
 };
 
-// ── Meta CAPI ────────────────────────────────────────────────────────────────
 async function sendMetaCAPI(data) {
   if (!PIXEL_ID || !ACCESS_TOKEN) {
-    console.warn('[META CAPI] Credentials yo\'q, o\'tkazib yuborildi');
-    return { skipped: true };
+    console.warn('[META CAPI] Credentials yo\'q');
+    return;
   }
 
   const payload = {
@@ -97,6 +80,11 @@ async function sendMetaCAPI(data) {
         fbp:               data.fbp,
         fbc:               data.fbc,
       },
+      custom_data: {
+        content_name: data.product,
+        value:        0,
+        currency:     'UZS',
+      },
     }],
   };
 
@@ -106,131 +94,105 @@ async function sendMetaCAPI(data) {
   );
   const result = await res.json();
   if (!res.ok) console.error('[META CAPI ERROR]', result);
-  else         console.log('[META CAPI] Lead event yuborildi');
+  else         console.log('[META CAPI] Lead yuborildi:', data.product);
   return result;
 }
 
-// ── AmoCRM ───────────────────────────────────────────────────────────────────
 async function createAmoCRMLead(data) {
   if (!AMO_SUBDOMAIN || !AMO_TOKEN) {
-    console.warn('[AMOCRM] Credentials yo\'q, o\'tkazib yuborildi');
-    return { skipped: true };
+    console.warn('[AMOCRM] Credentials yo\'q');
+    return;
   }
 
   const base    = `https://${AMO_SUBDOMAIN}.amocrm.ru`;
   const headers = {
-    'Content-Type': 'application/json',
+    'Content-Type':  'application/json',
     'Authorization': `Bearer ${AMO_TOKEN}`,
   };
 
-  // 1. Mavjud kontaktni qidirish — duplicate oldini olish
+  // 1. Kontakt qidirish
   let contactId = null;
   try {
-    const searchRes  = await fetch(
+    const searchText = await (await fetch(
       `${base}/api/v4/contacts?query=${encodeURIComponent(data.phone)}`,
       { headers }
-    );
-    const searchText = await searchRes.text();
-    if (searchRes.ok && searchText) {
+    )).text();
+
+    if (searchText) {
       const searchData = JSON.parse(searchText);
       const existing   = searchData?._embedded?.contacts?.[0];
       if (existing) {
         contactId = existing.id;
-        console.log('[AMOCRM] Mavjud kontakt topildi:', contactId);
+        console.log('[AMOCRM] Mavjud kontakt:', contactId);
 
-        // FBP / FBC ni yangilash
+        // FBP/FBC yangilash
         if (data.fbp || data.fbc) {
-          const updateFields = [];
-          if (data.fbp) updateFields.push({ field_id: FIELD_FBP, values: [{ value: data.fbp }] });
-          if (data.fbc) updateFields.push({ field_id: FIELD_FBC, values: [{ value: data.fbc }] });
-          await fetch(`${base}/api/v4/contacts/${contactId}`, {
-            method: 'PATCH',
-            headers,
-            body: JSON.stringify([{ id: contactId, custom_fields_values: updateFields }]),
-          });
-          console.log('[AMOCRM] FBP/FBC yangilandi');
+          const fields = [];
+          if (data.fbp && FIELD_FBP) fields.push({ field_id: FIELD_FBP, values: [{ value: data.fbp }] });
+          if (data.fbc && FIELD_FBC) fields.push({ field_id: FIELD_FBC, values: [{ value: data.fbc }] });
+          if (fields.length) {
+            await fetch(`${base}/api/v4/contacts`, {
+              method: 'PATCH', headers,
+              body: JSON.stringify([{ id: contactId, custom_fields_values: fields }]),
+            });
+          }
         }
       }
     }
   } catch (err) {
-    console.warn('[AMOCRM] Qidirishda xatolik:', err);
+    console.warn('[AMOCRM] Qidirishda xatolik:', err.message);
   }
 
-  // 2. Topilmasa — yangi kontakt yaratish
+  // 2. Yangi kontakt yaratish
   if (!contactId) {
-    const contactRes  = await fetch(`${base}/api/v4/contacts`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify([{
-        name: data.name,
-        custom_fields_values: [
-          { field_code: 'PHONE', values: [{ value: data.phone, enum_code: 'WORK' }] },
-          ...(data.fbp ? [{ field_id: FIELD_FBP, values: [{ value: data.fbp }] }] : []),
-          ...(data.fbc ? [{ field_id: FIELD_FBC, values: [{ value: data.fbc }] }] : []),
-        ],
-      }]),
+    const customFields = [
+      { field_code: 'PHONE', values: [{ value: data.phone, enum_code: 'WORK' }] },
+    ];
+    if (data.fbp && FIELD_FBP) customFields.push({ field_id: FIELD_FBP, values: [{ value: data.fbp }] });
+    if (data.fbc && FIELD_FBC) customFields.push({ field_id: FIELD_FBC, values: [{ value: data.fbc }] });
+
+    const cRes  = await fetch(`${base}/api/v4/contacts`, {
+      method: 'POST', headers,
+      body: JSON.stringify([{ name: data.name, custom_fields_values: customFields }]),
     });
-    const contactData = await contactRes.json();
-    if (!contactRes.ok) {
-      console.error('[AMOCRM] Kontakt yaratishda xatolik:', contactData);
-    } else {
-      contactId = contactData?._embedded?.contacts?.[0]?.id;
-      console.log('[AMOCRM] Yangi kontakt yaratildi:', contactId);
-    }
+    const cData = await cRes.json();
+    contactId   = cData?._embedded?.contacts?.[0]?.id;
+    console.log('[AMOCRM] Yangi kontakt:', contactId);
   }
 
-  // 3. Lid yaratish
+  // 3. Lid yaratish — mahsulot bo'yicha tag
+  const tag = data.product ? `CAPI ${data.product}` : 'CAPI';
   const leadRes  = await fetch(`${base}/api/v4/leads`, {
-    method: 'POST',
-    headers,
+    method: 'POST', headers,
     body: JSON.stringify([{
-      name:        `${data.name} — Ko'ylakcha`,
+      name:        `${data.name} — ${data.product || 'Kiyim'}`,
       pipeline_id: AMO_PIPELINE,
       status_id:   AMO_STAGE,
       _embedded: {
-        ...(contactId ? { contacts: [{ id: contactId }] } : {}),
-        tags: [{ name: 'CAPI' }],
+        contacts: contactId ? [{ id: contactId }] : [],
+        tags: [{ name: tag }],
       },
     }]),
   });
   const leadData = await leadRes.json();
-  if (!leadRes.ok) {
-    console.error('[AMOCRM] Lid yaratishda xatolik:', leadData);
-    throw new Error('AmoCRM lid yaratishda xatolik');
-  }
+  const leadId   = leadData?._embedded?.leads?.[0]?.id;
+  console.log('[AMOCRM] Lid yaratildi:', leadId, '| Mahsulot:', tag);
 
-  const leadId = leadData?._embedded?.leads?.[0]?.id;
-  console.log('[AMOCRM] Lid yaratildi:', leadId);
-
-  // 4. Yoshni saqlash
-  if (leadId && data.age && FIELD_AGE) {
-    await fetch(`${base}/api/v4/leads`, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify([{
-        id: leadId,
-        custom_fields_values: [{ field_id: FIELD_AGE, values: [{ value: data.age }] }],
-      }]),
-    });
-    console.log('[AMOCRM] Yosh saqlandi');
-  }
-
-  // 5. Izoh qo'shish
+  // 4. Izoh
   if (leadId) {
     try {
       await fetch(`${base}/api/v4/leads/${leadId}/notes`, {
-        method: 'POST',
-        headers,
+        method: 'POST', headers,
         body: JSON.stringify([{
           note_type: 'common',
           params: {
-            text: `Telefon: ${data.phone}\nYosh: ${data.age || '—'}\nManba: ${data.sourceUrl || '—'}\nFBP: ${data.fbp || '—'}\nFBC: ${data.fbc || '—'}`,
+            text: `Telefon: ${data.phone}\nMahsulot: ${data.product || '—'}\nManba: ${data.sourceUrl || '—'}\nFBP: ${data.fbp || '—'}\nFBC: ${data.fbc || '—'}`,
           },
         }]),
       });
       console.log('[AMOCRM] Izoh qo\'shildi');
     } catch (err) {
-      console.warn('[AMOCRM] Izoh qo\'shishda xatolik:', err);
+      console.warn('[AMOCRM] Izoh xatolik:', err.message);
     }
   }
 
