@@ -91,8 +91,8 @@ async function sendMetaCAPI(data) {
       event_source_url: data.sourceUrl,
       action_source:    'website',
       user_data: {
-        ph:                [sha256(data.phone)],
-        fn:                [sha256(data.firstName)],
+        ph:                sha256(data.phone),
+        fn:                sha256(data.firstName),
         client_user_agent: data.userAgent,
         fbp:               data.fbp,
         fbc:               data.fbc,
