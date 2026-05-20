@@ -175,6 +175,8 @@
       box-shadow: 0 0 0 3px rgba(245,197,24,0.12);
       background: rgba(255,255,255,0.1);
     }
+    .fg input.error { border-color: rgba(220,53,69,0.7); }
+    .product-btn.error { border-color: rgba(220,53,69,0.7); }
     .fg select {
       cursor: pointer;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.35)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -301,15 +303,16 @@
     /* ── ERROR ── */
     .error-toast {
       display: none;
-      background: rgba(220, 53, 69, 0.95);
-      color: #fff;
-      font-family: var(--fh);
-      font-size: 1.4rem;
-      font-weight: 700;
+      background: rgba(220, 53, 69, 0.15);
+      border: 1.5px solid rgba(220, 53, 69, 0.6);
+      color: #ff6b6b;
+      font-family: var(--fb);
+      font-size: 1rem;
+      font-weight: 600;
       text-align: center;
-      padding: 20px 24px;
-      border-radius: 14px;
-      margin-bottom: 16px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      margin-bottom: 14px;
       animation: fadeUp 0.3s ease both;
     }
     .error-toast.show { display: block; }
@@ -335,7 +338,6 @@
     </h1>
 
     <div id="form-block">
-      <div class="error-toast" id="error-toast"></div>
       <p class="subtext">
         Batafsil ma'lumot olish uchun ismingiz va telefon raqamingizni qoldiring.<br>
         <strong>Mutaxassislarimiz siz bilan bog'lanishadi.</strong>
@@ -369,6 +371,7 @@
         <input type="hidden" id="inp-product" value=""/>
       </div>
 
+      <div class="error-toast" id="error-toast"></div>
       <div class="btn-wrap">
         <button class="sbtn" id="sbtn" onclick="submitForm()">
           Yuborish
@@ -397,17 +400,35 @@
 <script>
 
 
-  function showError(msg) {
+  function showError(msg, fieldId) {
     const el = document.getElementById('error-toast');
-    el.textContent = msg;
+    el.textContent = '⚠️ ' + msg;
     el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 3000);
+    if (fieldId) {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.classList.add('error');
+        field.addEventListener('input', function() {
+          field.classList.remove('error');
+          if (document.getElementById('inp-name').value.trim() &&
+              document.getElementById('inp-phone').value.trim() &&
+              document.getElementById('inp-product').value) {
+            el.classList.remove('show');
+          }
+        }, { once: true });
+      }
+    }
   }
 
   function selectProd(el, val) {
     document.querySelectorAll('.product-btn').forEach(b => b.classList.remove('selected'));
     el.classList.add('selected');
     document.getElementById('inp-product').value = val;
+    // Mahsulot tanlanganida error o'chsin
+    if (document.getElementById('inp-name').value.trim() &&
+        document.getElementById('inp-phone').value.trim()) {
+      document.getElementById('error-toast').classList.remove('show');
+    }
   }
 
   function getCookie(name) {
@@ -424,8 +445,8 @@
     const phone   = document.getElementById('inp-phone').value.trim();
     const product = document.getElementById('inp-product').value;
 
-    if (!name)    { showError('Ismingizni kiriting'); return; }
-    if (!phone)   { showError('Telefon raqamingizni kiriting'); return; }
+    if (!name)    { showError('Ismingizni kiriting', 'inp-name'); return; }
+    if (!phone)   { showError('Telefon raqamingizni kiriting', 'inp-phone'); return; }
     if (!product) { showError('Mahsulotni tanlang'); return; }
 
     submitted = true;
