@@ -247,6 +247,22 @@
     .tgbtn svg { width: 18px; height: 18px; fill: #fff; }
 
 
+
+    .product-label {
+      display: block;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--white);
+      text-transform: none;
+      letter-spacing: 0;
+      margin-bottom: 12px;
+    }
+    .product-label-sub {
+      font-size: 0.88rem;
+      font-weight: 400;
+      color: rgba(255,255,255,0.55);
+    }
+
     /* ── PRODUCT BUTTONS ── */
     .product-btns {
       display: flex;
@@ -281,6 +297,23 @@
     }
     .product-btn.selected .pb-name { color: var(--gold); }
 
+
+    /* ── ERROR ── */
+    .error-toast {
+      display: none;
+      background: rgba(220, 53, 69, 0.95);
+      color: #fff;
+      font-family: var(--fh);
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 20px 24px;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.3s ease both;
+    }
+    .error-toast.show { display: block; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 580px) {
       .card { padding: 20px 22px; }
@@ -302,6 +335,7 @@
     </h1>
 
     <div id="form-block">
+      <div class="error-toast" id="error-toast"></div>
       <p class="subtext">
         Batafsil ma'lumot olish uchun ismingiz va telefon raqamingizni qoldiring.<br>
         <strong>Mutaxassislarimiz siz bilan bog'lanishadi.</strong>
@@ -317,7 +351,7 @@
         <input type="tel" id="inp-phone" placeholder="+998 90 123 45 67"/>
       </div>
       <div class="fg">
-        <label>Qaysi mahsulot qiziqtiradi?</label>
+        <label class="product-label">Qaysi mahsulot qiziqtiradi?<br><span class="product-label-sub">Pastdagilardan bittasini tanlang</span></label>
         <div class="product-btns" id="product-btns">
           <div class="product-btn" onclick="selectProd(this, &quot;Ko\'ylakcha&quot;)">
             <span class="pb-icon">👗</span>
@@ -362,6 +396,14 @@
 
 <script>
 
+
+  function showError(msg) {
+    const el = document.getElementById('error-toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
   function selectProd(el, val) {
     document.querySelectorAll('.product-btn').forEach(b => b.classList.remove('selected'));
     el.classList.add('selected');
@@ -382,9 +424,9 @@
     const phone   = document.getElementById('inp-phone').value.trim();
     const product = document.getElementById('inp-product').value;
 
-    if (!name)    { alert('Iltimos, ismingizni kiriting.');           return; }
-    if (!phone)   { alert('Iltimos, telefon raqamingizni kiriting.');  return; }
-    if (!product) { alert('Iltimos, mahsulotni tanlang.');             return; }
+    if (!name)    { showError('Ismingizni kiriting'); return; }
+    if (!phone)   { showError('Telefon raqamingizni kiriting'); return; }
+    if (!product) { showError('Mahsulotni tanlang'); return; }
 
     submitted = true;
     const btn = document.getElementById('sbtn');
