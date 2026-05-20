@@ -1,15 +1,13 @@
 const crypto = require('crypto');
 
-// ── Tokenlar Vercel Environment Variables dan o'qiladi ──────────────────────
 const PIXEL_ID       = process.env.META_PIXEL_ID;
 const ACCESS_TOKEN   = process.env.META_ACCESS_TOKEN;
 const AMO_TOKEN      = process.env.AMO_TOKEN;
 const AMO_SUBDOMAIN  = process.env.AMO_SUBDOMAIN;
 const SOLD_STATUS_ID = parseInt(process.env.AMO_SOLD_STATUS_ID || '0');
-const FIELD_FBP = parseInt(process.env.AMO_FIELD_FBP || '0');
-const FIELD_FBC = parseInt(process.env.AMO_FIELD_FBC || '0');
+const FIELD_FBP      = parseInt(process.env.AMO_FIELD_FBP || '0');
+const FIELD_FBC      = parseInt(process.env.AMO_FIELD_FBC || '0');
 
-// ── Yordamchi funksiyalar ────────────────────────────────────────────────────
 function sha256(val) {
   return crypto.createHash('sha256').update((val || '').trim().toLowerCase()).digest('hex');
 }
@@ -21,7 +19,6 @@ function cleanPhone(phone) {
   return '+' + c;
 }
 
-// ── Asosiy handler ───────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -30,20 +27,30 @@ module.exports = async (req, res) => {
     const body = req.body;
     console.log('[SOLD WEBHOOK] Keldi:', JSON.stringify(body));
 
+    // Etap o’zgarishi
     let i = 0;
     while (body[`leads[status][${i}][id]`] !== undefined) {
       const leadId   = body[`leads[status][${i}][id]`];
       const statusId = parseInt(body[`leads[status][${i}][status_id]`] || '0');
-
       console.log(`Lead ${leadId} → etap ${statusId}`);
-
       if (statusId === SOLD_STATUS_ID) {
-        const leadInfo = await fetchLeadDetails(leadId);
-        if (leadInfo) {
-          await sendPurchaseToMeta(leadId, leadInfo);
-        }
+        const info = await fetchLeadInfo(leadId);
+        if (info) await sendPurchase(leadId, info);
       }
       i++;
+    }
+
+    // Sotildi etapida to‘g‘ridan-to‘g‘ri yaratilgan lead
+    let j = 0;
+    while (body[`leads[add][${j}][id]`] !== undefined) {
+      const leadId   = body[`leads[add][${j}][id]`];
+      const statusId = parseInt(body[`leads[add][${j}][status_id]`] || '0');
+      console.log(`Lead yaratildi ${leadId} → etap ${statusId}`);
+      if (statusId === SOLD_STATUS_ID) {
+        const info = await fetchLeadInfo(leadId);
+        if (info) await sendPurchase(leadId, info);
+      }
+      j++;
     }
 
     return res.status(200).json({ ok: true });
@@ -54,14 +61,12 @@ module.exports = async (req, res) => {
   }
 };
 
-// ── AmoCRM dan lid ma'lumotlarini olish ─────────────────────────────────────
-async function fetchLeadDetails(leadId) {
+async function fetchLeadInfo(leadId) {
   if (!AMO_SUBDOMAIN || !AMO_TOKEN) return null;
 
   const headers = { 'Authorization': `Bearer ${AMO_TOKEN}` };
 
   try {
-    // Lid + bog'liq kontakt
     const leadRes = await fetch(
       `https://${AMO_SUBDOMAIN}.amocrm.ru/api/v4/leads/${leadId}?with=contacts`,
       { headers }
@@ -72,7 +77,6 @@ async function fetchLeadDetails(leadId) {
     const contactId = lead?._embedded?.contacts?.[0]?.id;
     if (!contactId) return null;
 
-    // Kontakt ma'lumotlari
     const contactRes = await fetch(
       `https://${AMO_SUBDOMAIN}.amocrm.ru/api/v4/contacts/${contactId}`,
       { headers }
@@ -80,21 +84,13 @@ async function fetchLeadDetails(leadId) {
     if (!contactRes.ok) return null;
     const contact = await contactRes.json();
 
-    let phone     = '';
-    let fbp       = '';
-    let fbc       = '';
+    let phone = '', fbp = '', fbc = '';
     const firstName = (contact.name || '').split(' ')[0].toLowerCase();
 
-    for (const field of contact.custom_fields_values || []) {
-      if (field.field_code === 'PHONE' && field.values?.[0]?.value) {
-        phone = cleanPhone(field.values[0].value);
-      }
-      if (field.field_id === FIELD_FBP && field.values?.[0]?.value) {
-        fbp = field.values[0].value;
-      }
-      if (field.field_id === FIELD_FBC && field.values?.[0]?.value) {
-        fbc = field.values[0].value;
-      }
+    for (const f of contact.custom_fields_values || []) {
+      if (f.field_code === 'PHONE' && f.values?.[0]?.value) phone = cleanPhone(f.values[0].value);
+      if (FIELD_FBP && f.field_id === FIELD_FBP) fbp = f.values?.[0]?.value || '';
+      if (FIELD_FBC && f.field_id === FIELD_FBC) fbc = f.values?.[0]?.value || '';
     }
 
     return { phone, firstName, fbp, fbc, price: lead.price || 0 };
@@ -105,11 +101,10 @@ async function fetchLeadDetails(leadId) {
   }
 }
 
-// ── Meta CAPI — Purchase event ───────────────────────────────────────────────
-async function sendPurchaseToMeta(leadId, data) {
+async function sendPurchase(leadId, data) {
   if (!PIXEL_ID || !ACCESS_TOKEN) {
     console.warn('[META PURCHASE] Credentials yo\'q');
-    return { skipped: true };
+    return;
   }
 
   const userData = { client_user_agent: 'amoCRM' };
@@ -122,7 +117,7 @@ async function sendPurchaseToMeta(leadId, data) {
     data: [{
       event_name:       'Purchase',
       event_time:       Math.floor(Date.now() / 1000),
-      event_id:         `sold_${leadId}`,
+      event_id:         `sold_${leadId}`,        // Date.now() YO'Q — deduplication uchun
       event_source_url: process.env.SITE_URL || '',
       action_source:    'website',
       user_data:        userData,
