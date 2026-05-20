@@ -246,6 +246,41 @@
     .tgbtn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(34,158,217,0.4); }
     .tgbtn svg { width: 18px; height: 18px; fill: #fff; }
 
+
+    /* ── PRODUCT BUTTONS ── */
+    .product-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .product-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .product-btn:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(245,197,24,0.5);
+    }
+    .product-btn.selected {
+      background: rgba(245,197,24,0.12);
+      border-color: var(--gold);
+    }
+    .pb-icon { font-size: 1.8rem; }
+    .pb-name {
+      font-family: var(--fh);
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--white);
+    }
+    .product-btn.selected .pb-name { color: var(--gold); }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 580px) {
       .card { padding: 20px 22px; }
@@ -283,12 +318,21 @@
       </div>
       <div class="fg">
         <label>Qaysi mahsulot qiziqtiradi?</label>
-        <select id="inp-product">
-          <option value="">— Tanlang —</option>
-          <option value="Ko'ylakcha">👗 Ko'ylakcha</option>
-          <option value="Choponcha">🧥 Choponcha</option>
-          <option value="Pultli Mashina">🚗 Pultli Mashina</option>
-        </select>
+        <div class="product-btns" id="product-btns">
+          <div class="product-btn" onclick="selectProd(this, &quot;Ko\'ylakcha&quot;)">
+            <span class="pb-icon">👗</span>
+            <span class="pb-name">Ko'ylakcha</span>
+          </div>
+          <div class="product-btn" onclick="selectProd(this, &quot;Choponcha&quot;)">
+            <span class="pb-icon">🧥</span>
+            <span class="pb-name">Choponcha</span>
+          </div>
+          <div class="product-btn" onclick="selectProd(this, &quot;Pultli Mashina&quot;)">
+            <span class="pb-icon">🚗</span>
+            <span class="pb-name">Pultli Mashina</span>
+          </div>
+        </div>
+        <input type="hidden" id="inp-product" value=""/>
       </div>
 
       <div class="btn-wrap">
@@ -317,6 +361,13 @@
 </div>
 
 <script>
+
+  function selectProd(el, val) {
+    document.querySelectorAll('.product-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('inp-product').value = val;
+  }
+
   function getCookie(name) {
     const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
     return match ? match[2] : '';
