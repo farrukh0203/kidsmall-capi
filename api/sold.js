@@ -122,8 +122,8 @@ async function sendPurchase(leadId, data) {
       action_source:    'website',
       user_data:        userData,
       custom_data: {
-        value:    data.price,
-        currency: 'UZS',
+        value:    Math.round(data.price / 12500),
+        currency: 'USD',
       },
     }],
   };
