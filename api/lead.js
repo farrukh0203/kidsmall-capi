@@ -82,8 +82,6 @@ async function sendMetaCAPI(data) {
       },
       custom_data: {
         content_name: data.product,
-        value:        0,
-        currency:     'UZS',
       },
     }],
   };
