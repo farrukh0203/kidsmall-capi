@@ -37,6 +37,10 @@ module.exports = async (req, res) => {
     const cleanedPhone = cleanPhone(phone);
     const firstName    = (name || '').trim().split(' ')[0].toLowerCase();
 
+    // IPv6 ni birinchi tanlaymiz, bo'lmasa IPv4
+    const forwarded = (req.headers['x-forwarded-for'] || '').split(',').map(s => s.trim()).filter(Boolean);
+    const clientIp  = forwarded.find(ip => ip.includes(':')) || forwarded[0] || req.headers['x-real-ip'] || '';
+
     // 1. Meta CAPI — Lead event
     await sendMetaCAPI({
       eventId:   eventId || ('lead_' + Date.now()),
@@ -47,6 +51,7 @@ module.exports = async (req, res) => {
       userAgent: userAgent || '',
       sourceUrl: sourceUrl || '',
       product:   product || '',
+      clientIp,
     });
 
     // 2. AmoCRM
@@ -76,6 +81,7 @@ async function sendMetaCAPI(data) {
       user_data: {
         ph:                sha256(data.phone),
         fn:                sha256(data.firstName),
+        client_ip_address: data.clientIp,
         client_user_agent: data.userAgent,
         fbp:               data.fbp,
         fbc:               data.fbc,
