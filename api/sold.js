@@ -162,11 +162,10 @@ async function sendQualifiedLead(leadId, data) {
 
   const payload = {
     data: [{
-      event_name:       'QualifiedLead',
-      event_time:       Math.floor(Date.now() / 1000),
-      event_id:         `qualified_${leadId}`,
-      event_source_url: process.env.SITE_URL || '',
-      action_source:    'crm',
+      event_name:    'QualifiedLead',
+      event_time:    Math.floor(Date.now() / 1000),
+      event_id:      `qualified_${leadId}`,
+      action_source: 'crm',
       user_data:        userData,
     }],
   };
